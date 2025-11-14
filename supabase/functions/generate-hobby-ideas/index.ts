@@ -18,6 +18,32 @@ serve(async (req) => {
       throw new Error('Lovable API key not configured')
     }
 
+    console.log('Generating 10 money-making ideas for hobby:', hobby)
+
+    const prompt = `You are a creative business advisor specialized in monetizing hobbies. Generate 10 diverse, realistic money-making ideas for the hobby: "${hobby}". 
+
+Include both traditional and modern/trending approaches. Make them actionable and beginner-friendly.
+
+For each idea, provide:
+1. A catchy method name
+2. Clear description (2-3 sentences)
+3. Specific tools/platforms
+4. Realistic earning potential in INR (Indian Rupees)
+5. An appropriate emoji
+6. A relevant source URL (learning resource, platform, or tutorial)
+
+Return ONLY a JSON array with this exact structure:
+[
+  {
+    "method": "Method Name",
+    "description": "Clear description of the opportunity",
+    "tools": "Specific platforms or tools",
+    "earnings": "₹X,XXX-₹X,XXX/month",
+    "icon": "🎯",
+    "source": "https://example.com/relevant-guide"
+  }
+]`
+
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -27,37 +53,50 @@ serve(async (req) => {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash',
         messages: [
-          {
-            role: 'system',
-            content: `You are a creative business advisor specialized in monetizing hobbies. Generate 10 diverse, realistic money-making ideas for any hobby. Include current trends and modern platforms. For each idea, provide:
-            1. A catchy method name
-            2. Clear description (2-3 sentences)
-            3. Specific tools/platforms
-            4. Realistic earning potential in INR (Indian Rupees)
-            5. An appropriate emoji
-
-            Format as JSON array with properties: method, description, tools, earnings (in INR), icon`
-          },
-          {
-            role: 'user',
-            content: `Generate 10 creative money-making ideas for the hobby: ${hobby}. Include both traditional and modern/trending approaches. Make them actionable and beginner-friendly.`
-          }
+          { role: 'system', content: 'You are a creative business advisor. Always return valid JSON arrays as requested.' },
+          { role: 'user', content: prompt }
         ],
         temperature: 0.8,
-        max_tokens: 2000,
       }),
     })
 
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Lovable AI error:', response.status, errorText)
+      console.log('Using default ideas due to API error')
+      return new Response(
+        JSON.stringify({ ideas: getDefaultIdeas(hobby) }),
+        { 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        }
+      )
+    }
+
     const data = await response.json()
-    const content = data.choices[0].message.content
+    const content = data.choices?.[0]?.message?.content
+    
+    console.log('Gemini API response received')
 
     // Parse the JSON response or create structured response if it's not JSON
     let ideas;
     try {
-      ideas = JSON.parse(content)
-    } catch {
+      // Try to extract JSON from markdown code blocks if present
+      const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || 
+                       content.match(/```\s*([\s\S]*?)\s*```/)
+      const jsonStr = jsonMatch ? jsonMatch[1] : content
+      ideas = JSON.parse(jsonStr.trim())
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError)
       // If not JSON, create structured response from text
       ideas = parseTextToIdeas(content, hobby)
+    }
+
+    // Validate we have an array
+    if (!Array.isArray(ideas) || ideas.length === 0) {
+      ideas = getDefaultIdeas(hobby)
     }
 
     return new Response(
@@ -70,15 +109,17 @@ serve(async (req) => {
       },
     )
   } catch (error) {
+    console.error('Error in generate-hobby-ideas:', error)
+    console.log('Using default ideas due to error')
+    // Return default ideas instead of error (better UX)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ ideas: getDefaultIdeas(hobby || 'your hobby') }),
       { 
         headers: { 
           ...corsHeaders, 
           'Content-Type': 'application/json' 
-        }, 
-        status: 500 
-      },
+        } 
+      }
     )
   }
 })
