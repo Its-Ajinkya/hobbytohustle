@@ -14,42 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      learning_progress: {
-        Row: {
-          completed_at: string | null
-          course_title: string
-          created_at: string
-          id: string
-          progress_percentage: number
-          started_at: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          completed_at?: string | null
-          course_title: string
-          created_at?: string
-          id?: string
-          progress_percentage?: number
-          started_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          completed_at?: string | null
-          course_title?: string
-          created_at?: string
-          id?: string
-          progress_percentage?: number
-          started_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -76,30 +40,6 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      saved_courses: {
-        Row: {
-          course_data: Json
-          course_title: string
-          id: string
-          saved_at: string
-          user_id: string
-        }
-        Insert: {
-          course_data: Json
-          course_title: string
-          id?: string
-          saved_at?: string
-          user_id: string
-        }
-        Update: {
-          course_data?: Json
-          course_title?: string
-          id?: string
-          saved_at?: string
           user_id?: string
         }
         Relationships: []

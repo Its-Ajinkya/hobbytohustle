@@ -1,13 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, BookOpen, TrendingUp } from "lucide-react";
+import { Sparkles, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { FilterSidebar } from "@/components/FilterSidebar";
-import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
 
 const opportunities = [
   {
@@ -70,41 +68,12 @@ const Index = () => {
   const navigate = useNavigate();
   const [hobby, setHobby] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [generatedIdeas, setGeneratedIdeas] = useState<any[]>([]);
-  const [trendingHobbies, setTrendingHobbies] = useState<any[]>([]);
-  const [loadingTrending, setLoadingTrending] = useState(false);
   
   // Filter states
   const [location, setLocation] = useState("all");
   const [category, setCategory] = useState("all");
   const [budget, setBudget] = useState([0, 50000]);
   const [datePosted, setDatePosted] = useState("all");
-
-  // Load trending hobbies on mount
-  useEffect(() => {
-    // Only load trending hobbies once on mount
-    if (trendingHobbies.length === 0) {
-      loadTrendingHobbies();
-    }
-  }, []);
-
-  const loadTrendingHobbies = async () => {
-    setLoadingTrending(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('get-trending-hobbies');
-      
-      if (error) throw error;
-      
-      if (data?.trendingHobbies) {
-        setTrendingHobbies(data.trendingHobbies);
-      }
-    } catch (error) {
-      console.error('Error loading trending hobbies:', error);
-      toast.error('Failed to load trending hobbies');
-    } finally {
-      setLoadingTrending(false);
-    }
-  };
 
   const handleResetFilters = () => {
     setLocation("all");
@@ -132,19 +101,11 @@ const Index = () => {
     setIsLoading(true);
     
     try {
-      const { data, error } = await supabase.functions.invoke('generate-hobby-ideas', {
-        body: { hobby: hobby.trim() }
-      });
-      
-      if (error) throw error;
-      
-      if (data?.ideas) {
-        setGeneratedIdeas(data.ideas);
-        toast.success("AI-powered ideas generated! 🤖✨");
-      }
+      // Simulate AI generation
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast.success("AI-powered ideas generated! 🤖✨");
     } catch (error) {
-      console.error('Error generating ideas:', error);
-      toast.error("Error generating ideas. Please try again.");
+      toast.error("Error generating ideas");
     } finally {
       setIsLoading(false);
     }
@@ -250,119 +211,74 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          {/* Generated Ideas Display */}
-          {generatedIdeas.length > 0 && (
-            <div className="grid gap-8 md:grid-cols-2 max-w-6xl mx-auto">
-              {generatedIdeas.map((idea, index) => (
-                <Card key={index} className="hover:shadow-lg transition-shadow">
-                  <CardHeader className="pb-4">
-                    <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                      {idea.icon && <span>{idea.icon}</span>}
-                      {idea.method}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-muted-foreground text-base leading-relaxed">
-                      {idea.description}
-                    </p>
-                    {idea.tools && (
-                      <div className="flex items-start gap-2">
-                        <Badge variant="secondary" className="text-xs">Tools</Badge>
-                        <span className="text-sm text-muted-foreground">{idea.tools}</span>
-                      </div>
-                    )}
-                    {idea.earnings && (
-                      <div className="flex items-start gap-2">
-                        <Badge variant="secondary" className="text-xs">Earnings</Badge>
-                        <span className="text-sm font-semibold text-foreground">{idea.earnings}</span>
-                      </div>
-                    )}
-                    {idea.source && (
-                      <Button 
-                        variant="outline" 
-                        className="w-full mt-4"
-                        onClick={() => window.open(idea.source, '_blank')}
-                      >
-                        <BookOpen className="h-4 w-4 mr-2" />
-                        Learn More
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          {/* Static Opportunity Cards */}
+          <div className="grid gap-8 md:grid-cols-2 max-w-6xl mx-auto">
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Home Baker/Specialty Chef</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Specialize in niche cuisines and sell through social media.
+                </p>
+              </CardContent>
+            </Card>
 
-          {/* Static Opportunity Cards - Only show if no generated ideas */}
-          {generatedIdeas.length === 0 && (
-            <div className="grid gap-8 md:grid-cols-2 max-w-6xl mx-auto">
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">Home Baker/Specialty Chef</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Specialize in niche cuisines and sell through social media.
-                  </p>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Handmade Crafts & Jewelry</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Sell unique, handmade items on e-commerce platforms.
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">Handmade Crafts & Jewelry</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Sell unique, handmade items on e-commerce platforms.
-                  </p>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Freelance Content Creator</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Provide writing, design, and video editing services to businesses.
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">Freelance Content Creator</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Provide writing, design, and video editing services to businesses.
-                  </p>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Personal Fitness Instructor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Offer online classes or personalized fitness plans.
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">Personal Fitness Instructor</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Offer online classes or personalized fitness plans.
-                  </p>
-                </CardContent>
-              </Card>
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Graphic Designer</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Design logos and marketing materials for startups.
+                </p>
+              </CardContent>
+            </Card>
 
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">Graphic Designer</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Design logos and marketing materials for startups.
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-2xl font-bold">Pet Grooming and Care</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-base leading-relaxed">
-                    Offer pet sitting, grooming, and homemade pet treats.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+            <Card className="hover:shadow-lg transition-shadow">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold">Pet Grooming and Care</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-base leading-relaxed">
+                  Offer pet sitting, grooming, and homemade pet treats.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
